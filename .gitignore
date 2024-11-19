@@ -2,4 +2,3 @@ venv
 .idea
 manifests/app/secrets.dec.yaml
 manifests/db/secrets.dec.yaml
-.sops.yaml
