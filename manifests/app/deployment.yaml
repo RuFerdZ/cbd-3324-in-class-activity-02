@@ -1,0 +1,66 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: app-ns
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-configmap
+  namespace: app-ns
+data:
+  PGDB_HOST: "db-service.db-ns.svc.cluster.local"
+  PGDB_USER: "postgres"
+  PGDB_NAME: "flask_app_db"
+  REDIS_HOST: "redis-service.redis-ns.svc.cluster.local"
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-deployment
+  namespace: app-ns
+  labels:
+    app: app-deployment
+    version: v1
+    env: dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flask-app
+  template:
+    metadata:
+      labels:
+        app: flask-app
+        version: v2
+        env: dev
+    spec:
+      containers:
+        - name: flask-app
+          image: ruferdz/ica-02-c0918066:v2
+          ports:
+            - containerPort: 5000
+          envFrom:
+            - secretRef:
+                name: app-secret
+            - configMapRef:
+                name: app-configmap
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: app-service
+  namespace: app-ns
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 5000
+      targetPort: 5000
+  selector:
+    app: flask-app
